@@ -1,0 +1,857 @@
+Chapter 1
+=========
+No Code
+
+
+Chapter 2
+=========
+Listing 2-1
+-----------
+// URL for linking to MSN Maps
+"http://maps.msn.com/home.aspx?plce1=" +
+
+// Retreive the name of the current city
+[Geography].[City].CurrentMember.Name + "," + 
+
+// Append state-province name
+[Geography].[State-Province].CurrentMember.Name + "," +
+
+// Append country name
+[Geography].[Country].CurrentMember.Name +
+
+// Append region parameter 
+"&regn1=" +
+
+// Determine correct region parameter value
+Case
+    When [Geography].[Country].CurrentMember Is
+         [Geography].[Country].&[Australia]
+    Then "3"
+    When [Geography].[Country].CurrentMember Is
+         [Geography].[Country].&[Canada] 
+         Or
+         [Geography].[Country].CurrentMember Is
+         [Geography].[Country].&[United States]
+    Then "0"
+    Else "1"
+End
+
+Listing 2-2
+-----------
+SELECT    {DrilldownLevel({[Date].[Calendar Year].[All Periods]})} ON COLUMNS, 
+         {DrilldownLevel({[Geography].[Geography].[All Geographies]})} ON ROWS  
+FROM 
+ (
+   	SELECT 
+      		{[Geography].[Geography].[Country].&[United States], 
+      		[Geography].[Geography].[Country].&[Germany], 
+      		[Geography].[Geography].[Country].&[France]} ON COLUMNS  
+   	FROM [Adventure Works]
+	) 
+  WHERE ([Product].[Product Categories].[Category].&[1],[Measures].[Reseller Sales Amount])
+
+
+Chapter 3
+=========
+No Code
+
+
+Chapter 4
+=========
+No Code
+
+
+Chapter 5
+=========
+No Code
+
+
+Chapter 6
+=========
+No Code
+
+
+Chapter 7
+=========
+No Code
+
+
+Chapter 8
+=========
+No Code
+
+
+Chapter 9
+=========
+Bikes query
+-----------
+Use AdventureWorks2008
+Go
+
+Select 
+   Datepart(YYYY, Sales.SalesOrderHeader.ShipDate) As OrderYear, 
+   Sales.SalesOrderHeader.TotalDue,
+   Production.ProductCategory.Name As Category,
+   Production.ProductSubcategory.Name As Subcategory
+From 
+   Sales.SalesOrderDetail Inner Join 
+   Sales.SalesOrderHeader On 
+   Sales.SalesOrderDetail.SalesOrderID = Sales.SalesOrderHeader.SalesOrderID Inner Join 
+   Production.Product On 
+   Sales.SalesOrderDetail.ProductID = Production.Product.ProductID Inner Join 
+   Production.ProductSubcategory On 
+   Production.Product.ProductSubcategoryID =
+   Production.ProductSubcategory.ProductSubcategoryID Inner Join 
+   Production.ProductCategory On 
+   Production.ProductSubcategory.ProductCategoryID = 
+   Production.ProductCategory.ProductCategoryID
+Where 
+   Production.ProductCategory.Name = 'Bikes'
+
+Bikes PIVOT Query
+-----------------
+Select 
+    Subcategory, 
+    [2001] As CY2001, 
+    [2002] As CY2002, 
+    [2003] As CY2003, 
+    [2004] As CY2004
+From 
+(
+   Select 
+      DatePart(YYYY, Sales.SalesOrderHeader.ShipDate) As OrderYear, 
+      Production.ProductSubcategory.Name As Subcategory,
+      Cast(Sales.SalesOrderDetail.LineTotal As Money) As ExtAmount
+    From 
+      Sales.SalesOrderDetail Inner Join 
+      Sales.SalesOrderHeader On
+      Sales.SalesOrderDetail.SalesOrderID = 
+      Sales.SalesOrderHeader.SalesOrderID Inner Join
+      Production.Product On
+      Sales.SalesOrderDetail.ProductID = Production.Product.ProductID Inner Join
+      Production.ProductSubcategory On
+      Production.Product.ProductSubcategoryID =
+      Production.ProductSubcategory.ProductSubcategoryID Inner Join
+      Production.ProductCategory On
+      Production.ProductSubcategory.ProductCategoryID =    
+      Production.ProductCategory.ProductCategoryID
+    Where 
+      ProductCategory.Name = 'Bikes' And
+      ProductSubcategory.Name In ('Mountain Bikes','Touring Bikes')
+) P 
+    Pivot
+    (
+       Sum(ExtAmount)
+       For OrderYear 
+       In ([2001], [2002], [2003], [2004]
+    )
+) As Pvt
+
+Bikes MDX
+---------
+Select
+   Non Empty [Ship Date].[Calendar Year].Children On Columns,
+   Non Empty {Product.Subcategory.[Mountain Bikes], Product.Subcategory.[Touring Bikes]} 
+      On Rows
+From
+   [Adventure Works]
+Where
+   (Product.Category.[Bikes], Measures.[Sales Amount])
+
+Basic MDX query
+---------------
+SELECT {[Measures].[Reseller Sales Amount]} ON COLUMNS ,
+	{[Product].[Category]} ON ROWS
+FROM [Adventure Works]
+
+Multiple category MDX query
+---------------------------
+SELECT { [Measures].[Reseller Sales Amount] } ON COLUMNS ,
+	{[Product].[Category].[Accessories],
+	[Product].[Category].[Bikes],
+	[Product].[Category].[Clothing],
+	[Product].[Category].[Components]} ON ROWS
+FROM [Adventure Works]
+
+Two measures as columns MDX query
+---------------------------------
+SELECT { [Measures].[Reseller Sales Amount], 
+[Measures].[Reseller Freight Cost]} ON COLUMNS ,
+	{[Product].[Category].[Accessories],
+	[Product].[Category].[Bikes],
+	[Product].[Category].[Clothing],
+	[Product].[Category].[Components]} ON ROWS
+FROM [Adventure Works]
+
+Dimensions for columns and rows
+-------------------------------
+SELECT { [Date].[Fiscal Year].[FY 2002], 
+	[Date].[Fiscal Year].[FY 2003]} ON COLUMNS ,
+	{[Product].[Category].[Accessories],
+	[Product].[Category].[Bikes]} ON ROWS
+FROM [Adventure Works]
+
+Where clause #1
+---------------
+SELECT { [Date].[Fiscal Year].[FY 2002], 
+	[Date].[Fiscal Year].[FY 2003]} ON COLUMNS ,
+	{[Product].[Category].[Accessories],
+	[Product].[Category].[Bikes]} ON ROWS
+FROM [Adventure Works]
+WHERE ([Measures].[Reseller Freight Cost])
+
+Where clause #2
+---------------
+SELECT { [Date].[Fiscal Year].[FY 2002], 
+	[Date].[Fiscal Year].[FY 2003]} ON COLUMNS ,
+	{[Product].[Category].[Accessories],
+	[Product].[Category].[Bikes]} ON ROWS
+FROM [Adventure Works]
+WHERE ([Measures].[Reseller Freight Cost],
+	[Geography].[Country].[United States])
+
+MEMBERS query
+-------------
+SELECT { [Measures].[Reseller Sales Amount] } ON COLUMNS ,
+	{[Product].[Category].Members} ON ROWS
+FROM [Adventure Works]
+
+CHILDREN function
+-----------------
+SELECT { [Measures].[Reseller Sales Amount] } ON COLUMNS ,
+	{[Product].[Category].Children} ON ROWS
+FROM [Adventure Works]
+
+Year over year growth
+---------------------
+WITH 
+	MEMBER [Measures].[YOY Growth] AS
+		([Date].[Fiscal Quarter].CurrentMember, 
+[Measures].[Reseller Sales Amount])-
+		([Date].[Fiscal Quarter].PrevMember, 
+[Measures].[Reseller Sales Amount])
+SELECT NONEMPTY([Date].[Fiscal Quarter].Children * 
+{[Measures].[Reseller Sales Amount], 
+[Measures].[YOY Growth]}) ON COLUMNS ,
+	NONEMPTY([Product].[Model Name].Children) ON ROWS
+FROM [Adventure Works]
+WHERE ([Geography].[Country].[United States])
+
+Aggregate functions
+-------------------
+WITH 
+    MEMBER [Measures].[Avg Sales] AS
+        AVG({[Product].[Product Categories].CurrentMember.Children}, 
+            [Measures].[Reseller Sales Amount])
+SELECT 
+    NONEMPTY([Date].[Fiscal Quarter].Children * 
+    {[Measures].[Reseller Sales Amount], 
+    [Measures].[Avg Sales]}) ON COLUMNS ,
+    NONEMPTY([Product].[Product Categories].Children) ON ROWS
+FROM [Adventure Works]
+WHERE ([Geography].[Country].[United States])
+
+TopCount function
+-----------------
+WITH 
+    MEMBER [Measures].[Avg Sales] AS
+        AVG({[Product].[Product Categories].CurrentMember.Children},
+        [Measures].[Reseller Sales Amount])
+SELECT 
+    NONEMPTY([Date].[Fiscal Year].Children * 
+    {[Measures].[Reseller Sales Amount], 
+    [Measures].[Avg Sales]}) ON COLUMNS ,
+    TOPCOUNT(
+        [Product].[Product Categories].Subcategory.Members, 
+        10, 
+        [Measures].[Reseller Sales Amount]) ON ROWS
+FROM [Adventure Works]
+WHERE ([Geography].[Country].[United States])
+
+Top 10 products for 2004
+------------------------
+Select 
+   Nonempty([Date].[Fiscal].[Month].Members) On Columns,
+   TopCount([Product].[Product Categories].Subcategory.Members,
+   10,
+   [Measures].[Reseller Sales Amount]) On Rows
+From 
+   [Adventure Works]
+Where 
+   ([Geography].[Country].[United States], [Date].[Fiscal Year].[FY 2004])
+
+Month over month
+----------------
+WITH 
+    MEMBER [Measures].[Growth] AS
+    ([Date].[Fiscal].CurrentMember,[Measures].[Reseller Sales Amount]) - 
+    ([Date].[Fiscal].PrevMember, [Measures].[Reseller Sales Amount])
+SELECT NONEMPTY([Date].[Fiscal].[Month].Members 
+    * {[Measures].[Reseller Sales Amount], [Measures].[Growth]}) 
+    ON COLUMNS ,
+    TOPCOUNT([Product].[Product Categories].Subcategory.Members,
+      10,
+      [Measures].[Reseller Sales Amount])
+    ON ROWS
+FROM [Adventure Works]
+WHERE ([Geography].[Country].[United States], [Date].[Fiscal Year].&[2004])
+
+Format function
+---------------
+WITH 
+    MEMBER [Measures].[Growth] AS
+      Format(([Date].[Fiscal].CurrentMember, 
+        [Measures].[Reseller Sales Amount]) - 
+        ([Date].[Fiscal].PrevMember, 
+        [Measures].[Reseller Sales Amount]), "$#,##0.00")
+
+ParallelPeriod function
+-----------------------
+WITH 
+    MEMBER [Measures].[Growth] AS
+      Format(([Date].[Fiscal].CurrentMember,
+        [Measures].[Reseller Sales Amount]) - 
+        (ParallelPeriod([Date].[Fiscal].[Fiscal Year], 1, 
+          [Date].[Fiscal].CurrentMember), 
+        [Measures].[Reseller Sales Amount]), "$#,##0.00")
+
+PeriodsToDate function
+----------------------
+SUM(PeriodsToDate([Date].[Fiscal].[Fiscal Year], 
+    [Date].[Fiscal].CurrentMember), 
+    [Measures].[Reseller Sales Amount])	
+
+YTD for last year
+-----------------
+WITH 
+    MEMBER [Measures].[CurrentYTD] AS
+      SUM(PeriodsToDate([Date].[Fiscal].[Fiscal Year], 
+        [Date].[Fiscal].CurrentMember), 
+        [Measures].[Reseller Sales Amount])
+	
+    MEMBER [Measures].[PreviousYTD] AS
+      SUM(PeriodsToDate([Date].[Fiscal].[Fiscal Year], 
+        ParallelPeriod([Date].[Fiscal].[Fiscal Year], 
+          1, 
+          [Date].[Fiscal].CurrentMember)), 
+        [Measures].[Reseller Sales Amount])
+	
+SELECT [Date].[Fiscal].[Month].Members 
+    * {[Measures].[CurrentYTD], 
+    [Measures].[PreviousYTD]} 
+    ON COLUMNS ,
+    TOPCOUNT([Product].[Product Categories].Subcategory.Members,
+      10,
+      [Measures].[Reseller Sales Amount])
+    ON ROWS
+FROM [Adventure Works]
+WHERE ([Geography].[Country].[United States], 
+    [Date].[Fiscal Year].&[2004])
+
+
+Chapter 10
+==========
+No Code
+
+
+Chapter 11
+==========
+Create vAccessoryBuyers
+-----------------------
+Use AdventureWorksDW2008
+GO
+
+If	Exists( Select * From sys.views Where object_id = OBJECT_ID(N'dbo.vAccessoryBuyers'))
+   Drop View dbo.vAccessoryBuyers
+GO
+
+Create View dbo.vAccessoryBuyers
+As
+
+Select     
+   C.CustomerKey, 
+   C.GeographyKey, 
+   C.CustomerAlternateKey, 
+   C.Title, 
+   C.FirstName, 
+   C.MiddleName, 
+   C.LastName, 
+   C.NameStyle, 
+   C.BirthDate, 
+   C.MaritalStatus, 
+   C.Suffix,              
+   C.Gender, 
+   C.EmailAddress, 
+   C.YearlyIncome, 
+   C.TotalChildren, 
+   C.NumberChildrenAtHome, 
+   C.EnglishEducation, 
+   C.SpanishEducation, 
+   C.FrenchEducation, 
+   C.EnglishOccupation, 
+   C.SpanishOccupation, 
+   C.FrenchOccupation, 
+   C.HouseOwnerFlag, 
+   C.NumberCarsOwned, 
+   C.AddressLine1, 
+   C.AddressLine2, 
+   C.Phone, 
+   C.DateFirstPurchase, 
+   C.CommuteDistance, 
+   D.Region, 
+   D.Age, 
+
+   Case D.Clothing
+      When  0  Then  0
+      Else  1
+   End As ClothingBuyer,
+
+   Case D.Accessories
+      When  0  Then  0
+      Else  1
+   End As AccessoryBuyer
+From         
+   dbo.DimCustomer As C Inner Join
+   (
+      Select     
+         CustomerKey, 
+         Region, 
+         Age, 
+         
+         Sum(Case EnglishProductCategoryName 
+               When  'Clothing'     Then  1 
+               Else  0 
+            End)  As Clothing,
+
+         Sum(Case EnglishProductCategoryName 
+               When  'Accessories'  Then  1	
+               Else  0 
+            End)  As Accessories
+      From          
+         dbo.vDMPrepAccessories	
+      Group By 
+         CustomerKey, 
+         Region, 
+         Age
+   )  As D  On 
+   C.CustomerKey  =  D.CustomerKey	
+GO
+	
+Create vDMPrepAccessories
+-------------------------
+Use AdventureWorksDW2008
+GO
+
+If	Exists
+( 
+   Select * From sys.views Where object_id = OBJECT_ID(N'dbo.vDMPrepAccessories')
+)
+   Drop View dbo.vDMPrepAccessories
+GO
+
+Create View dbo.vDMPrepAccessories
+As
+
+Select
+   PC.EnglishProductCategoryName,
+   PSC.EnglishProductSubcategoryName,
+   Coalesce(P.ModelName, P.EnglishProductName) As Model,
+   C.CustomerKey,
+   S.SalesTerritoryGroup As Region,
+	
+   Case
+      When Month(GetDate()) < Month(C.BirthDate)
+         Then DateDiff(yy, C.BirthDate,GetDate()) - 1
+      When Month(GetDate()) = Month(C.BirthDate) And Day(GetDate()) < Day(C.BirthDate)
+         Then DateDiff(yy, C.BirthDate,GetDate()) - 1
+      Else DateDiff(yy, C.BirthDate,GetDate())
+   End As Age,
+	
+   Case
+      When C.YearlyIncome < 40000 
+         Then 'Low'
+      When C.YearlyIncome > 60000 
+         Then 'High'
+      Else 'Moderate'
+   End As IncomeGroup,
+	
+   D.CalendarYear,
+   D.FiscalYear,
+   D.MonthNumberOfYear As Month,
+   F.SalesOrderNumber As OrderNumber,
+   F.SalesOrderLineNumber As LineNumber,
+   F.OrderQuantity As Quantity,
+   F.ExtendedAmount As Amount  
+From
+   dbo.FactInternetSales F Inner Join 
+   dbo.DimDate D On 
+   F.OrderDateKey = D.DateKey Inner Join 
+   dbo.DimProduct P On 
+   F.ProductKey = P.ProductKey Inner Join 
+   dbo.DimProductSubcategory PSC On
+   P.ProductSubcategoryKey = PSC.ProductSubcategoryKey Inner Join
+   dbo.DimProductCategory PC On
+   PSC.ProductCategoryKey = PC.ProductCategoryKey Inner Join
+   dbo.DimCustomer C On
+   F.CustomerKey = C.CustomerKey Inner Join
+   dbo.DimGeography G On
+   C.GeographyKey = G.GeographyKey Inner Join
+   dbo.DimSalesTerritory S On
+   G.SalesTerritoryKey = S.SalesTerritoryKey 
+Where
+   PC.EnglishProductCategoryName Not In ('Bikes','Components') And
+   PSC.EnglishProductSubcategoryName Not In ('Helmets')
+Go
+
+Predict our Accessory Buyers
+----------------------------
+Select
+   PB.FirstName,
+   PB.LastName,
+   PB.City,
+   PB.StateProvinceCode,
+   PB.PostalCode,
+   PB.Phone,
+   PB.NumberChildrenAtHome,
+   PB.Occupation,
+   PB.ProspectiveBuyerKey,
+   AB_NaiveBayes.[Accessory Buyer],
+   PredictProbability([Accessory Buyer])
+From
+   AB_NaiveBayes 
+Prediction Join
+   OpenQuery
+   (
+      [Adventure Works DW],
+      'SELECT 
+         ProspectiveBuyerKey,
+         FirstName,
+         LastName,
+         City,
+         StateProvinceCode,
+         PostalCode,
+         Education,
+         Occupation,
+         Phone,
+         HouseOwnerFlag,
+         NumberCarsOwned,
+         NumberChildrenAtHome,
+         MaritalStatus,
+         Gender,
+         YearlyIncome
+      FROM 
+         dbo.ProspectiveBuyer'        
+   ) As PB
+On 
+   AB_NaiveBayes.[Marital Status] = PB.[MaritalStatus] And
+   AB_NaiveBayes.[Gender] = PB.[Gender] And
+   AB_NaiveBayes.[Yearly Income] = PB.[YearlyIncome] And
+   AB_NaiveBayes.[Number Children At Home] = PB.[NumberChildrenAtHome] And
+   AB_NaiveBayes.[English Education] = PB.[Education] And
+   AB_NaiveBayes.[English Occupation] = PB.[Occupation] And
+   AB_NaiveBayes.[House Owner Flag] = PB.[HouseOwnerFlag] And
+   AB_NaiveBayes.[Number Cars Owned] = PB.[NumberCarsOwned]
+Where 
+   AB_NaiveBayes.[Accessory Buyer] = 1
+Order By
+   PredictProbability([Accessory Buyer]) Desc;
+
+Accessory Buyers: Naive Bayes DBX
+---------------------------------
+--Drop AccessoryBuyersCampaign mining structure
+Drop Mining Structure AccessoryBuyersCampaign;
+
+--Create AccessoryBuyersCampaign mining structure
+Create Mining Structure [AccessoryBuyersCampaign]
+(
+   [Customer Key]             Long     Key,
+   [Accessory Buyer]          Long     Discrete,
+   [Age]                      Long     Discretized(Automatic, 10),
+   [Commute Distance]         Text     Discrete,
+   [English Education]        Text     Discrete,
+   [English Occupation]       Text     Discrete,
+   [Gender]                   Text     Discrete,
+   [House Owner Flag]         Text     Discrete,
+   [Marital Status]           Text     Discrete,
+   [Number Cars Owned]        Long     Discrete,
+   [Number Children At Home]  Long     Discrete,
+   [Region]                   Text     Discrete,
+   [Yearly Income]            Double   Discretized(Automatic, 10)
+)
+With Holdout (30 Percent);
+
+--Drop model, if needed
+Drop  Mining   Model       AB_NaiveBayes;
+
+--Add a Naive Bayes model for the Accessory Buyers Campaign
+Alter Mining   Structure   AccessoryBuyersCampaign
+Add   Mining   Model       AB_NaiveBayes
+(
+   [Customer Key],
+   [Accessory Buyer]          Predict,
+   
+   [Age],
+   [Commute Distance],
+   [English Education],
+   [English Occupation],
+   [Gender],
+   [House Owner Flag],
+   [Marital Status],
+   [Number Cars Owned],
+   [Number Children At Home],
+   [Region],
+   [Yearly Income]
+)
+Using Microsoft_Naive_Bayes;
+
+--Process the Accessory Buyer mining structure
+Insert Into Mining Structure AccessoryBuyersCampaign
+(
+   [Customer Key],
+   [Accessory Buyer],
+   
+   [Age],
+   [Commute Distance],
+   [English Education],
+   [English Occupation],
+   [Gender],
+   [House Owner Flag],
+   [Marital Status],
+   [Number Cars Owned],
+   [Number Children At Home],
+   [Region],
+   [Yearly Income])
+OpenQuery
+(
+   [Adventure Works DW],
+   'SELECT 
+      CustomerKey, 
+      AccessoryBuyer,
+      Age, 
+      CommuteDistance,
+      EnglishEducation,
+      EnglishOccupation,
+      Gender,
+      HouseOwnerFlag,
+      MaritalStatus,
+      NumberCarsOwned,
+      NumberChildrenAtHome, 
+      Region,
+      YearlyIncome 
+    FROM 
+      dbo.vAccessoryBuyers'
+);
+
+--View all data in model
+Select * From AB_NaiveBayes.Content
+
+Select Distinct [Occupation]
+From AB_NaiveBayes
+
+--Review node data in this model
+Select
+   Node_Caption,
+   Node_Support,
+   Node_Distribution
+From
+   AB_NaiveBayes.Content
+Where
+   Node_Support > 0
+Order By
+   Node_Support Desc
+
+--Predict our Accessory Buyers
+Select
+   PB.FirstName,
+   PB.LastName,
+   PB.City,
+   PB.StateProvinceCode,
+   PB.PostalCode,
+   PB.Phone,
+   PB.NumberChildrenAtHome,
+   PB.Occupation,
+   PB.ProspectiveBuyerKey,
+   AB_NaiveBayes.[Accessory Buyer],
+   PredictProbability([Accessory Buyer]) As PredictedProbability
+From
+   AB_NaiveBayes 
+Prediction Join
+   OpenQuery
+   (
+      [Adventure Works DW],
+      'SELECT 
+         ProspectiveBuyerKey,
+         FirstName,
+         LastName,
+         City,
+         StateProvinceCode,
+         PostalCode,
+         Education,
+         Occupation,
+         Phone,
+         HouseOwnerFlag,
+         NumberCarsOwned,
+         NumberChildrenAtHome,
+         MaritalStatus,
+         Gender,
+         YearlyIncome
+      FROM 
+         dbo.ProspectiveBuyer'        
+   ) As PB
+On 
+   AB_NaiveBayes.[Marital Status] = PB.[MaritalStatus] And
+   AB_NaiveBayes.[Gender] = PB.[Gender] And
+   AB_NaiveBayes.[Yearly Income] = PB.[YearlyIncome] And
+   AB_NaiveBayes.[Number Children At Home] = PB.[NumberChildrenAtHome] And
+   AB_NaiveBayes.[English Education] = PB.[Education] And
+   AB_NaiveBayes.[English Occupation] = PB.[Occupation] And
+   AB_NaiveBayes.[House Owner Flag] = PB.[HouseOwnerFlag] And
+   AB_NaiveBayes.[Number Cars Owned] = PB.[NumberCarsOwned]
+Where 
+   AB_NaiveBayes.[Accessory Buyer] = 1
+Order By
+   PredictProbability([Accessory Buyer]) Desc;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------
+--Predict our Accessory Buyers
+SELECT
+  TOP 10
+  t.[LastName],
+  t.[FirstName],
+  [Decision Tree].[Bike Buyer],
+  PredictProbability([Bike Buyer])
+FROM
+  [Decision Tree]
+PREDICTION JOIN
+  OPENQUERY([Adventure Works DW],
+    'SELECT
+      [LastName],
+      [FirstName],
+      [MaritalStatus],
+      [Gender],
+      [YearlyIncome],
+      [TotalChildren],
+      [NumberChildrenAtHome],
+      [Education],
+      [Occupation],
+      [HouseOwnerFlag],
+      [NumberCarsOwned]
+    FROM
+      [dbo].[ProspectiveBuyer]
+    ') AS t
+ON
+  [Decision Tree].[Marital Status] = t.[MaritalStatus] AND
+  [Decision Tree].[Gender] = t.[Gender] AND
+  [Decision Tree].[Yearly Income] = t.[YearlyIncome] AND
+  [Decision Tree].[Total Children] = t.[TotalChildren] AND
+  [Decision Tree].[Number Children At Home] = t.[NumberChildrenAtHome] AND
+  [Decision Tree].[Education] = t.[Education] AND
+  [Decision Tree].[Occupation] = t.[Occupation] AND
+  [Decision Tree].[House Owner Flag] = t.[HouseOwnerFlag] AND
+  [Decision Tree].[Number Cars Owned] = t.[NumberCarsOwned]
+WHERE [Decision Tree].[Bike Buyer] =1
+ORDER BY PredictProbability([Bike Buyer]) DESC
+
+
+--CREATE MINING MODEL [NBExemple3] ( CustomerKey LONG KEY, Gender TEXT DISCRETE, [Number Cars Owned] LONG DISCRETE, [Accessory Buyer] LONG DISCRETE PREDICT ) USING Microsoft_Naive_Bayes
+Alter Mining   Structure   AccessoryBuyersCampaign
+Add   Mining   Model       NBExample3
+(
+    [Customer Key] , 
+    Gender  ,
+    [Number Cars Owned]  ,
+    [Accessory Buyer]   PREDICT
+)
+Using Microsoft_Naive_Bayes
+
+
+--Add a Naive Bayes model to the Accessory Buyers Campaign
+
+CREATE MINING MODEL [NBSample2]
+(
+    [CustomerKey] LONG KEY, 
+    Gender TEXT DISCRETE,
+    [Number Cars Owned] LONG DISCRETE,
+    [Bike Buyer] LONG DISCRETE PREDICT
+)
+USING Microsoft_Naive_Bayes
+
+
+Create Mining Structure [AccessoryBuyersCampaign2]
+(
+   [Customer Key]    Long  Key,
+   [Age]             LONG  DISCRETIZED(Automatic,10),
+   [Accessory Buyer] LONG  DISCRETE,
+   [Commute Distance] TEXT DISCRETE,
+   [Education] TEXT DISCRETE,
+   [Gender] TEXT DISCRETE,
+   [House Owner Flag] TEXT DISCRETE,
+   [Marital Status] TEXT DISCRETE,
+   [Number Cars Owned]LONG DISCRETE,
+   [Number Children At Home]LONG DISCRETE,
+   [Occupation] TEXT DISCRETE,
+   [Region] TEXT DISCRETE,
+   [Total Children]LONG DISCRETE,
+   [Yearly Income] DOUBLE CONTINUOUS
+)
+WITH HOLDOUT (30 PERCENT or 1000 CASES)
+
+
+
+INSERT INTO MINING STRUCTURE [Bike Buyer]
+(
+   [Customer Key],
+   [Age],
+   [Bike Buyer],
+   [Commute Distance],
+   [Education],
+   [Gender],
+   [House Owner Flag],
+   [Marital Status],
+   [Number Cars Owned],
+   [Number Children At Home],
+   [Occupation],
+   [Region],
+   [Total Children],
+   [Yearly Income]   
+)
+OPENQUERY([Adventure Works DW2008],
+   'SELECT CustomerKey, Age, BikeBuyer,
+         CommuteDistance,EnglishEducation,
+         Gender,HouseOwnerFlag,MaritalStatus,
+         NumberCarsOwned,NumberChildrenAtHome, 
+         EnglishOccupation,Region,TotalChildren,
+         YearlyIncome 
+    FROM dbo.vTargetMail')
+
+
+Chapter 12
+==========
+No Code
+
+
+Chapter 13
+==========
+No Code
+
+
+Chapter 14
+==========
+No Code
+
